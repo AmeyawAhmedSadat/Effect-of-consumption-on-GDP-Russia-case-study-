@@ -1,7 +1,7 @@
 ---
 title: "Econometrics. Pair-wise linear regression"
 subtitle: "Discussion 3-2: The Crimea Reunion"
-author: "Evgenii V. Gilenko (e.gilenko@gsom.spbu.ru)"
+author: "Ahmed Sadat Ameyaw (ameyawcm@gmail.com)"
 output: html_document
 ---
 
