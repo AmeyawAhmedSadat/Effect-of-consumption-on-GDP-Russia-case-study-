@@ -1,0 +1,179 @@
+---
+title: "Econometrics. Pair-wise linear regression"
+subtitle: "Discussion 3-2: The Crimea Reunion"
+author: "Evgenii V. Gilenko (e.gilenko@gsom.spbu.ru)"
+output: html_document
+---
+
+# 1. Initial manipulations
+
+R Markdown language allows to fully introduce the power of **literate programming**.
+
+In this chunk the necessary libraries are activated. No warning messages reflected.
+
+```{r loadlib, message=F, warning=F}
+library(openxlsx) # to import data from MS Excel files
+library(Rlab) #  hplot
+library(car) # qqPlot; linear hypotheses testing
+library(DescTools) # RMSE, MAE, MAPE, SMAPE
+```
+
+Let's check and, if necessary, set the working directory to correctly import the data from a file.
+
+Now, let's import the data to a data-frame. If the file is in the **same directory**, then we just need to specify the name of the file.
+
+```{r}
+keynes <- read.xlsx("RussianGDP.xlsx", sheet="data")
+```
+
+
+# 2. Preliminary data analysis
+
+First, let's calculate some summary statistics for the dataset. You can apply the *summary* command right to the data-frame.
+
+```{r}
+summary(keynes)
+```
+
+Now, let's construct individual graphs for the two time-series.
+
+```{r}
+## Individual graph for CONS
+plot(x=keynes$year, y=keynes$cons, type="b", lwd=3, col="blue", pch=19 , main="Households' consumption expenditures", xlab="Years", ylab="Consumption expenditures (bln rub.)"); grid()
+```
+
+
+```{r}
+## Individual graph for GDP
+plot(x=keynes$year, y=keynes$gdp, type="b", lwd=3, col="blue", pch=19 , main="Gross Domestic Product", xlab="Years", ylab="GDP (bln rub.)"); grid()
+```
+
+
+Since we study the interaction of the two time-series, let's construct a scatter plot for them. The scatter plot actually involves several interesting tricks.
+
+
+```{r}
+## set up the colors
+keynes$color <- 1
+keynes$color[13] <- 2
+
+# construct the plot
+plot(x=keynes$gdp, y=keynes$cons, pch=19, col=keynes$color, ylim=c(8000,28000), main="Consumption vs GDP", xlab="GDP (bln rub.)", ylab="Consumption (bln rub.)", cex=1); grid()
+
+# add textual labels
+text(x=keynes$gdp, y=keynes$cons+1000, labels=keynes$year, cex=1, pos=3, col=keynes$color) 
+```
+
+Let's not forget about correlation analysis.
+
+```{r}
+cor.test(keynes$cons, keynes$gdp)
+```
+
+
+# 3. Pair-wise regression: Model 1.
+
+Let's estimate our Model 1 (**without the final observation!**).
+
+```{r}
+## estimate the model
+model1 <- lm(data=keynes[keynes$year!=2014, ], cons~gdp)
+summary(model1)
+```
+
+```{r}
+## change the format of numbers
+options(scipen = 4)
+```
+
+
+
+## 3.1. Hypotheses testing for Model 1.
+
+Here we will run some formal tests of Model 1.
+
+### 3.1.1. Testing normality of the disturbances
+
+```{r}
+# histogram
+hplot(model1$residuals, main = "Residuals of Model 1")
+```
+
+```{r}
+# Q-Q plot
+qqPlot(model1$residuals, distribution="norm", id=F, pch=19,
+       main="Q-Q plot for the residuals of Model 1")
+```
+
+```{r}
+# the Shapiro-Wilk test
+shapiro.test(model1$residuals)
+```
+
+
+### 3.1.2. Linear restrictions
+
+```{r}
+# a function from package car
+linearHypothesis(model1, c("gdp=1")) 
+```
+
+
+## 3.2. Forecasting with Model 1
+
+### 3.2.1 Goodness-of-fit
+
+Let's analyze goodness-of-fit of the model.
+
+```{r}
+# information criteria
+AIC(model1)
+BIC(model1)
+```
+
+```{r}
+# traditional prediction metrics
+RMSE(model1)
+MAE(model1)
+```
+
+```{r}
+# percentage prediction metrics
+MAPE(model1)
+SMAPE(model1)
+```
+
+### 3.2.2 Making predictions
+
+First, we construct a one-step ahead forecast with a **confidence** interval (at the 95% confidence level).
+
+```{r}
+predict.lm(model1, newdata=keynes[keynes$year==2014, ], interval="confidence", level=0.95)
+```
+
+Then, we construct a one-step ahead forecast with a **predictive** interval (at the 95% confidence level).
+
+```{r}
+predict.lm(model1, newdata=keynes[keynes$year==2014, ], interval="prediction", level=0.95)
+```
+
+
+# 4. Pair-wise regression: Model 2
+
+Let's transform the model.
+
+```{r}
+# subtract the mean of GDP
+keynes$dmgdp <- keynes$gdp - mean(keynes$gdp[keynes$year!=2014])
+```
+
+```{r}
+# estimate the new version of the model
+model2 <- lm(data=keynes[keynes$year!=2014, ], cons~dmgdp)
+summary(model2)
+```
+
+
+
+
+
