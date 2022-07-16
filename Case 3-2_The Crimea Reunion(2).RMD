@@ -7,8 +7,6 @@ output: html_document
 
 # 1. Initial manipulations
 
-R Markdown language allows to fully introduce the power of **literate programming**.
-
 In this chunk the necessary libraries are activated. No warning messages reflected.
 
 ```{r loadlib, message=F, warning=F}
